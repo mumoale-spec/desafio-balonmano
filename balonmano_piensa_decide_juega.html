@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Balonmano · Piensa, decide, juega</title>
+<style>
+:root{--navy:#06243b;--blue:#0b6fb8;--orange:#f27613;--paper:#f5f7f9;--ink:#173047;--green:#198754}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef3f7;color:var(--ink)}
+header{background:linear-gradient(135deg,#06243b,#0a3d63);color:#fff;padding:22px}
+.wrap{max-width:1180px;margin:auto}.top{display:flex;justify-content:space-between;gap:16px;align-items:center}
+h1{margin:0;font-size:30px}.tag{color:#ff9a45;font-weight:700;letter-spacing:2px}.score{display:flex;gap:10px}
+.team{padding:10px 18px;border-radius:12px;background:#0b6fb8;text-align:center;min-width:125px}.team.orange{background:#d95f00}.team b{font-size:30px;display:block}
+main{max-width:1180px;margin:20px auto;padding:0 12px}.status,.card{background:white;border:1px solid #d8e1e8;border-radius:14px;box-shadow:0 4px 16px #17304712}
+.status{padding:14px 18px;display:flex;justify-content:space-between;gap:12px;align-items:center}.pill{background:var(--orange);color:#fff;border-radius:8px;padding:8px 12px;font-weight:bold}
+.grid{display:grid;grid-template-columns:1.35fr .85fr;gap:18px;margin-top:18px}.card{padding:18px}
+.court{position:relative;min-height:430px;border-radius:12px;overflow:hidden;background:#c98d4f;background:repeating-linear-gradient(90deg,#d9a363 0,#d9a363 42px,#d39a59 42px,#d39a59 84px);border:5px solid white}
+.goal{position:absolute;top:10px;left:42%;width:16%;height:32px;border:6px solid #e8eef3;border-top-color:#d63b32}
+.area{position:absolute;top:-120px;left:19%;width:62%;height:300px;border:4px solid white;border-radius:0 0 50% 50%}
+.player{position:absolute;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:white;font-weight:bold;border:3px solid white;box-shadow:0 2px 6px #0004}
+.blue{background:#0876c9}.red{background:#d83232}.ball:after{content:"●";color:#111;font-size:14px;position:absolute;right:-9px;bottom:-7px}
+.arrow{position:absolute;border-top:4px dashed white;width:150px;transform-origin:left center;opacity:.9}
+.q h2{margin-top:0;color:#0a376d}.answers{display:grid;gap:10px}.answers button{width:100%;text-align:left;padding:14px;border:2px solid #d8e1e8;border-radius:10px;background:#fff;font-size:16px;cursor:pointer}.answers button:hover{border-color:#0b6fb8}.answers button.correct{border-color:#198754;background:#e9f7ef}.answers button.wrong{border-color:#c43b3b;background:#fff0f0}
+.feedback{display:none;margin-top:14px;padding:14px;border-radius:10px;background:#e9f7ef;border:1px solid #9dd5b4}.feedback.bad{background:#fff0f0;border-color:#efaaaa}
+.actions{display:flex;gap:10px;margin-top:14px}.primary{border:0;background:var(--orange);color:#fff;padding:12px 18px;border-radius:8px;font-weight:bold;cursor:pointer}.secondary{border:2px solid #0a376d;background:white;color:#0a376d;padding:10px 16px;border-radius:8px;font-weight:bold;cursor:pointer}
+.progress{display:flex;gap:8px;justify-content:center;margin:18px 0;flex-wrap:wrap}.dot{width:34px;height:34px;border-radius:50%;background:#d9e2e9;display:grid;place-items:center;font-weight:bold}.dot.on{background:var(--orange);color:#fff}.dot.done{background:#0b6fb8;color:#fff}
+.small{font-size:13px;color:#617484}@media(max-width:800px){.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.court{min-height:360px}}
+</style>
+</head>
+<body>
+<header><div class="wrap top"><div><h1>🤾 BALONMANO</h1><div class="tag">PIENSA · DECIDE · JUEGA</div></div>
+<div class="score"><div class="team">EQUIPO AZUL<b id="sa">0</b></div><div class="team orange">EQUIPO NARANJA<b id="sb">0</b></div></div></div></header>
+<main>
+<div class="status"><div><span class="pill" id="situation">SITUACIÓN 1/5</span> <strong id="type">Superioridad 3×2</strong></div><div>Turno: <strong id="turn">Equipo Azul</strong> · Valor: <strong>2 puntos</strong></div></div>
+<div class="grid">
+<div class="card"><div class="court" id="court"><div class="goal"></div><div class="area"></div></div><p class="small">Representación táctica simplificada. Observa espacios, defensores y posición del balón antes de decidir.</p></div>
+<div class="card q"><h2>¿Qué harías?</h2><p id="question"></p><div class="answers" id="answers"></div><div class="feedback" id="feedback"></div><div class="actions"><button class="primary" id="next" style="display:none">SIGUIENTE JUGADA →</button><button class="secondary" onclick="resetGame()">Reiniciar</button></div></div>
+</div>
+<div class="progress" id="progress"></div>
+</main>
+<script>
+const qs=[
+{type:"Superioridad 3×2",q:"Has fijado al defensor central y el pivote queda libre a su espalda. ¿Cuál es la mejor decisión?",a:["Lanzamiento exterior","Pase al pivote","Bote hacia la banda","Pase atrás sin fijar"],ok:1,why:"Al fijar al defensor generas ventaja para el pivote. El pase aprovecha directamente la superioridad creada.",p:[[48,78,"blue",1,1],[28,58,"blue",2,0],[68,58,"blue",3,0],[40,40,"red",1,0],[58,40,"red",2,0]]},
+{type:"Contraataque",q:"Recibes el balón en carrera con espacio por delante y un compañero abierto en el carril lateral. ¿Qué priorizas?",a:["Detenerte y esperar","Progresar rápido manteniendo amplitud","Botar hacia el centro siempre","Dar la espalda a portería"],ok:1,why:"En contraataque interesa conservar velocidad y amplitud para dificultar el repliegue y mantener líneas de pase.",p:[[48,78,"blue",1,1],[20,55,"blue",2,0],[55,35,"red",1,0]]},
+{type:"Ataque posicional",q:"La defensa 6:0 está muy cerrada y bascula hacia el lado del balón. ¿Qué acción puede generar espacio en el lado contrario?",a:["Circular rápido el balón","Mantener el balón parado","Acumular jugadores junto al balón","Evitar cambios de orientación"],ok:0,why:"Una circulación rápida obliga a la defensa a desplazarse y puede abrir espacios en el lado débil.",p:[[48,76,"blue",1,1],[25,57,"blue",2,0],[73,57,"blue",3,0],[25,34,"red",1,0],[40,32,"red",2,0],[55,32,"red",3,0],[70,34,"red",4,0]]},
+{type:"Reglamento",q:"Un atacante entra claramente en el área de 6 m con balón para obtener ventaja. ¿Qué decisión corresponde?",a:["Sigue el juego","Golpe franco para el atacante","Pérdida de posesión","7 metros automáticamente"],ok:2,why:"El jugador de campo no puede entrar en el área de portería con balón para obtener ventaja; la posesión pasa al rival.",p:[[48,32,"blue",1,1],[40,40,"red",1,0],[60,40,"red",2,0]]},
+{type:"Finalización",q:"Tras una penetración consigues superar al defensor y tienes una línea clara de lanzamiento. ¿Qué opción aprovecha mejor la ventaja?",a:["Finalizar antes de que llegue la ayuda","Volver obligatoriamente al centro","Esperar parado","Renunciar al lanzamiento"],ok:0,why:"Si ya has creado una ventaja clara y existe una buena situación de lanzamiento, finalizar antes de la ayuda defensiva suele ser la decisión más eficaz.",p:[[48,43,"blue",1,1],[38,52,"red",1,0],[65,48,"red",2,0]]}
+];
+let i=0, scores=[0,0], team=0, locked=false;
+function draw(){
+ let x=qs[i], c=document.getElementById("court"); c.querySelectorAll(".player,.arrow").forEach(e=>e.remove());
+ x.p.forEach(v=>{let e=document.createElement("div");e.className="player "+v[2]+(v[4]?" ball":"");e.textContent=v[3];e.style.left=v[0]+"%";e.style.top=v[1]+"%";c.appendChild(e)});
+ document.getElementById("situation").textContent=`SITUACIÓN ${i+1}/${qs.length}`;document.getElementById("type").textContent=x.type;
+ document.getElementById("turn").textContent=team?"Equipo Naranja":"Equipo Azul";document.getElementById("question").textContent=x.q;
+ let a=document.getElementById("answers");a.innerHTML="";x.a.forEach((t,n)=>{let b=document.createElement("button");b.innerHTML=`<b>${String.fromCharCode(65+n)}</b> · ${t}`;b.onclick=()=>answer(n,b);a.appendChild(b)});
+ let f=document.getElementById("feedback");f.style.display="none";f.className="feedback";document.getElementById("next").style.display="none";locked=false; prog();
+}
+function answer(n,b){if(locked)return;locked=true;let x=qs[i],bs=[...document.querySelectorAll("#answers button")];bs[x.ok].classList.add("correct");
+ let f=document.getElementById("feedback");if(n===x.ok){scores[team]+=2;b.classList.add("correct");f.innerHTML=`<b>✓ ¡Correcto! +2 puntos</b><br>${x.why}`}else{b.classList.add("wrong");f.classList.add("bad");f.innerHTML=`<b>✗ No es la mejor decisión.</b><br>${x.why}`}
+ f.style.display="block";document.getElementById("sa").textContent=scores[0];document.getElementById("sb").textContent=scores[1];document.getElementById("next").style.display="inline-block";
+}
+document.getElementById("next").onclick=()=>{if(i<qs.length-1){i++;team=1-team;draw()}else{let f=document.getElementById("feedback");let msg=scores[0]===scores[1]?"¡Empate!":scores[0]>scores[1]?"🏆 Gana el Equipo Azul":"🏆 Gana el Equipo Naranja";f.className="feedback";f.innerHTML=`<b>${msg}</b><br>Resultado final: ${scores[0]} – ${scores[1]}`;f.style.display="block";document.getElementById("next").style.display="none"}};
+function prog(){let p=document.getElementById("progress");p.innerHTML="";qs.forEach((_,n)=>{let d=document.createElement("div");d.className="dot "+(n<i?"done":n===i?"on":"");d.textContent=n+1;p.appendChild(d)})}
+function resetGame(){i=0;scores=[0,0];team=0;document.getElementById("sa").textContent=0;document.getElementById("sb").textContent=0;draw()} draw();
+</script>
+</body></html>
